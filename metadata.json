@@ -1,0 +1,9 @@
+{
+  "name": "Omaa Transportation",
+  "description": "A low-bandwidth, offline-first transport operations app for Nigerian schools focusing on smart tracking, expense management, and anti-fraud auditing.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
