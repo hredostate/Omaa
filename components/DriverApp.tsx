@@ -11,9 +11,6 @@ interface DriverAppProps {
 
 type ViewState = 'SHIFT_START' | 'DASHBOARD' | 'PRE_TRIP' | 'DRIVING' | 'EXPENSE' | 'INCIDENT' | 'SUMMARY' | 'ADHOC_REQUEST';
 
-const LATE_START_THRESHOLD_MS = 15 * 60 * 1000;
-const SPEED_LIMIT_KPH = 80;
-
 const DriverApp: React.FC<DriverAppProps> = ({ driverId }) => {
   const [driver, setDriver] = useState(store.getDriver(driverId));
   const [activeTrip, setActiveTrip] = useState<Trip | undefined>(store.getActiveTrip(driverId));
