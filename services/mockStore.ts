@@ -119,7 +119,7 @@ class Store {
   addExpense(expense: Expense) {
     const trip = this.trips.find(t => t.id === expense.tripId);
     if (trip) {
-      const fraudFlags = detectExpenseFraud(expense, trip, []);
+      const fraudFlags = detectExpenseFraud(expense, trip, this.pendingExpenses);
       const enrichedExpense = { ...expense, fraudAnalysis: fraudFlags };
       trip.expenses.push(enrichedExpense);
       this.pendingExpenses.push(enrichedExpense);
