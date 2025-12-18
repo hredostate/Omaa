@@ -70,7 +70,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.error('Error fetching user role:', error);
         setRole(null);
       } else if (data) {
-        setRole(data.role as Role);
+        // Validate role value against the Role enum
+        const roleValue = data.role;
+        if (roleValue === Role.DRIVER || roleValue === Role.MANAGER) {
+          setRole(roleValue);
+        } else {
+          console.error('Invalid role value from database:', roleValue);
+          setRole(null);
+        }
       }
     } catch (error) {
       console.error('Error fetching user role:', error);
