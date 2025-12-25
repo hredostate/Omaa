@@ -498,11 +498,17 @@ const AdminPanel: React.FC = () => {
               className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="">Select vehicle</option>
-              {vehicles.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.id} - {v.plateNumber}
-                </option>
-              ))}
+              {vehicles
+                .filter(v => {
+                  // Show unassigned vehicles OR the currently assigned vehicle when editing
+                  const isAssigned = drivers.some(d => d.vehicleId === v.id && d.id !== editingDriver?.id);
+                  return !isAssigned || (editingDriver && editingDriver.vehicleId === v.id);
+                })
+                .map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.id} - {v.plateNumber} {drivers.find(d => d.vehicleId === v.id && d.id !== editingDriver?.id) ? '(Assigned)' : ''}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -511,7 +517,11 @@ const AdminPanel: React.FC = () => {
             <input
               type="number"
               value={driverForm.floatBalance}
-              onChange={(e) => setDriverForm({ ...driverForm, floatBalance: parseFloat(e.target.value) || 0 })}
+              onChange={(e) => {
+                const val = e.target.value;
+                const parsed = parseFloat(val);
+                setDriverForm({ ...driverForm, floatBalance: val === '' ? 0 : (isNaN(parsed) ? 0 : parsed) });
+              }}
               className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="0"
             />
@@ -565,11 +575,16 @@ const AdminPanel: React.FC = () => {
             <input
               type="text"
               value={vehicleForm.plateNumber}
-              onChange={(e) => setVehicleForm({ ...vehicleForm, plateNumber: e.target.value })}
+              onChange={(e) => setVehicleForm({ ...vehicleForm, plateNumber: e.target.value.toUpperCase() })}
               className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="LAG-123-XY"
               disabled={!!editingVehicle}
             />
+            {editingVehicle && (
+              <p className="text-xs text-slate-500 mt-1">
+                Plate number cannot be changed after creation (used as vehicle ID)
+              </p>
+            )}
           </div>
 
           <div>
@@ -599,7 +614,11 @@ const AdminPanel: React.FC = () => {
             <input
               type="number"
               value={vehicleForm.year}
-              onChange={(e) => setVehicleForm({ ...vehicleForm, year: parseInt(e.target.value) || new Date().getFullYear() })}
+              onChange={(e) => {
+                const val = e.target.value;
+                const parsed = parseInt(val);
+                setVehicleForm({ ...vehicleForm, year: val === '' ? new Date().getFullYear() : (isNaN(parsed) ? new Date().getFullYear() : parsed) });
+              }}
               className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="2024"
             />
@@ -610,7 +629,11 @@ const AdminPanel: React.FC = () => {
             <input
               type="number"
               value={vehicleForm.capacity}
-              onChange={(e) => setVehicleForm({ ...vehicleForm, capacity: parseInt(e.target.value) || 30 })}
+              onChange={(e) => {
+                const val = e.target.value;
+                const parsed = parseInt(val);
+                setVehicleForm({ ...vehicleForm, capacity: val === '' ? 30 : (isNaN(parsed) ? 30 : parsed) });
+              }}
               className="w-full px-4 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="30"
             />

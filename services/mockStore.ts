@@ -214,8 +214,8 @@ class Store {
   createVehicle(vehicle: Omit<Vehicle, 'id' | 'qrCode'>): Vehicle {
     const newVehicle: Vehicle = {
       ...vehicle,
-      id: vehicle.plateNumber.replace(/[^A-Z0-9]/g, '-'),
-      qrCode: `QR-${vehicle.plateNumber.replace(/[^A-Z0-9]/g, '-')}-${Date.now()}`,
+      id: vehicle.plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '-'),
+      qrCode: `QR-${vehicle.plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '-')}-${Date.now()}`,
       status: 'ACTIVE',
     };
     this.vehicles.push(newVehicle);
