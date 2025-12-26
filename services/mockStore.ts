@@ -1,4 +1,4 @@
-import { Trip, Driver, TripStatus, TripType, Ping, Expense, PingType, Stop, PreTripCheck, Incident, FloatRequest, SyncStatus, TripApprovalStatus, LateReason, ExpenseCategory, FraudFlag, ApiEndpoint, GeoLocation, Student, PingTrigger } from '../types';
+import { Trip, Driver, Vehicle, TripStatus, TripType, Ping, Expense, PingType, Stop, PreTripCheck, Incident, FloatRequest, SyncStatus, TripApprovalStatus, LateReason, ExpenseCategory, FraudFlag, ApiEndpoint, GeoLocation, Student, PingTrigger } from '../types';
 import { detectExpenseFraud } from './fraudDetectionService';
 import { syncService } from './syncService';
 
@@ -14,6 +14,11 @@ const MOCK_DRIVERS: Driver[] = [
   { id: 'd2', name: 'Tunde Bakare', phone: '08098765432', floatBalance: 5000, vehicleId: 'BUS-04', boundDeviceId: 'device-456' },
 ];
 
+const MOCK_VEHICLES: Vehicle[] = [
+  { id: 'BUS-01', plateNumber: 'LAG-123-XY', make: 'Toyota', model: 'Coaster', year: 2020, capacity: 30, qrCode: 'QR-BUS-01-SECURE-HASH', status: 'ACTIVE' },
+  { id: 'BUS-04', plateNumber: 'LAG-456-AB', make: 'Mercedes', model: 'Sprinter', year: 2019, capacity: 25, qrCode: 'QR-BUS-04-SECURE-HASH', status: 'ACTIVE' },
+];
+
 const MOCK_VEHICLE_QR_CODES: Record<string, string> = {
     'BUS-01': 'QR-BUS-01-SECURE-HASH',
     'BUS-04': 'QR-BUS-04-SECURE-HASH',
@@ -27,6 +32,7 @@ const MOCK_STOPS: Stop[] = [
 
 class Store {
   drivers: Driver[] = MOCK_DRIVERS;
+  vehicles: Vehicle[] = MOCK_VEHICLES;
   trips: Trip[] = [];
   floatRequests: FloatRequest[] = [];
   pendingExpenses: Expense[] = [];
@@ -151,6 +157,130 @@ class Store {
   approveExpense(id: string) {
     const exp = this.pendingExpenses.find(e => e.id === id);
     if (exp) exp.status = 'APPROVED';
+  }
+
+  rejectExpense(id: string) {
+    const exp = this.pendingExpenses.find(e => e.id === id);
+    if (exp) exp.status = 'REJECTED';
+  }
+
+  rejectFloatRequest(id: string) {
+    const req = this.floatRequests.find(r => r.id === id);
+    if (req) req.status = 'REJECTED';
+  }
+
+  // ===== DRIVER CRUD OPERATIONS =====
+  getAllDrivers(): Driver[] {
+    return this.drivers;
+  }
+
+  createDriver(driver: Omit<Driver, 'id'>): Driver {
+    const newDriver: Driver = {
+      ...driver,
+      id: `d${Date.now()}`,
+      shiftStarted: 0,
+    };
+    this.drivers.push(newDriver);
+    return newDriver;
+  }
+
+  updateDriver(id: string, updates: Partial<Omit<Driver, 'id'>>): Driver | null {
+    const driver = this.drivers.find(d => d.id === id);
+    if (!driver) return null;
+    Object.assign(driver, updates);
+    return driver;
+  }
+
+  deleteDriver(id: string): boolean {
+    const activeTrip = this.trips.find(t => t.driverId === id && t.status === TripStatus.IN_PROGRESS);
+    if (activeTrip) {
+      throw new Error('Cannot delete driver with active trip');
+    }
+    const index = this.drivers.findIndex(d => d.id === id);
+    if (index === -1) return false;
+    this.drivers.splice(index, 1);
+    return true;
+  }
+
+  // ===== VEHICLE CRUD OPERATIONS =====
+  getAllVehicles(): Vehicle[] {
+    return this.vehicles;
+  }
+
+  getVehicle(id: string): Vehicle | undefined {
+    return this.vehicles.find(v => v.id === id);
+  }
+
+  createVehicle(vehicle: Omit<Vehicle, 'id' | 'qrCode'>): Vehicle {
+    const newVehicle: Vehicle = {
+      ...vehicle,
+      id: vehicle.plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '-'),
+      qrCode: `QR-${vehicle.plateNumber.toUpperCase().replace(/[^A-Z0-9]/g, '-')}-${Date.now()}`,
+      status: 'ACTIVE',
+    };
+    this.vehicles.push(newVehicle);
+    MOCK_VEHICLE_QR_CODES[newVehicle.id] = newVehicle.qrCode;
+    return newVehicle;
+  }
+
+  updateVehicle(id: string, updates: Partial<Omit<Vehicle, 'id' | 'qrCode'>>): Vehicle | null {
+    const vehicle = this.vehicles.find(v => v.id === id);
+    if (!vehicle) return null;
+    Object.assign(vehicle, updates);
+    return vehicle;
+  }
+
+  deleteVehicle(id: string): boolean {
+    const assignedDriver = this.drivers.find(d => d.vehicleId === id);
+    if (assignedDriver) {
+      throw new Error('Cannot delete vehicle assigned to a driver');
+    }
+    const index = this.vehicles.findIndex(v => v.id === id);
+    if (index === -1) return false;
+    this.vehicles.splice(index, 1);
+    delete MOCK_VEHICLE_QR_CODES[id];
+    return true;
+  }
+
+  // ===== TRIP CRUD OPERATIONS =====
+  getTrip(id: string): Trip | undefined {
+    return this.trips.find(t => t.id === id);
+  }
+
+  updateTrip(id: string, updates: Partial<Omit<Trip, 'id'>>): Trip | null {
+    const trip = this.trips.find(t => t.id === id);
+    if (!trip) return null;
+    Object.assign(trip, updates);
+    return trip;
+  }
+
+  cancelTrip(id: string): boolean {
+    const trip = this.trips.find(t => t.id === id);
+    if (!trip) return false;
+    if (trip.status === TripStatus.COMPLETED) {
+      throw new Error('Cannot cancel completed trip');
+    }
+    trip.status = TripStatus.CANCELLED;
+    return true;
+  }
+
+  // ===== INCIDENT CRUD OPERATIONS =====
+  resolveIncident(tripId: string, incidentId: string): boolean {
+    const trip = this.trips.find(t => t.id === tripId);
+    if (!trip) return false;
+    const incident = trip.incidents.find(i => i.id === incidentId);
+    if (!incident) return false;
+    incident.resolved = true;
+    return true;
+  }
+
+  deleteIncident(tripId: string, incidentId: string): boolean {
+    const trip = this.trips.find(t => t.id === tripId);
+    if (!trip) return false;
+    const index = trip.incidents.findIndex(i => i.id === incidentId);
+    if (index === -1) return false;
+    trip.incidents.splice(index, 1);
+    return true;
   }
 }
 

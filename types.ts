@@ -203,6 +203,18 @@ export interface Driver {
   shiftStarted?: number; 
 }
 
+export interface Vehicle {
+  id: string;
+  plateNumber: string;
+  make: string;
+  model: string;
+  year: number;
+  capacity: number;
+  qrCode: string;
+  status: 'ACTIVE' | 'MAINTENANCE' | 'RETIRED';
+  lastMaintenanceDate?: number;
+}
+
 export enum ApiEndpoint {
   TELEMETRY_BATCH = '/api/v1/sync/telemetry',
   TRIP_EVENT = '/api/v1/trips/events',

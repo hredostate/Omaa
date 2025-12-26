@@ -3,14 +3,15 @@ import React, { useState, useEffect } from 'react';
 import { store } from '../services/mockStore';
 import { Trip, TripStatus, Expense, FloatRequest, TripApprovalStatus, FraudSeverity, ExpenseCategory, Incident } from '../types';
 // Added TriangleAlert to the lucide-react import list
-import { Map, Activity, FileText, CheckCircle, XCircle, AlertCircle, WifiOff, Clock, Calendar, ChevronRight, AlertTriangle, TriangleAlert, Info, TrendingUp, DollarSign, Download, Printer, LayoutDashboard, Bus, MapPin, StopCircle, Navigation, ShieldAlert, Users } from 'lucide-react';
+import { Map, Activity, FileText, CheckCircle, XCircle, AlertCircle, WifiOff, Clock, Calendar, ChevronRight, AlertTriangle, TriangleAlert, Info, TrendingUp, DollarSign, Download, Printer, LayoutDashboard, Bus, MapPin, StopCircle, Navigation, ShieldAlert, Users, Settings } from 'lucide-react';
 import Documentation from './Documentation';
 import SimulatedMap from './SimulatedMap';
+import AdminPanel from './AdminPanel';
 
 const LOGO_URL = "https://tyvufbldcucgmmlattct.supabase.co/storage/v1/object/public/Images/omaa.jpeg";
 
 const ManagerApp: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'MAP' | 'APPROVALS' | 'DOCS'>('DASHBOARD');
+  const [activeTab, setActiveTab] = useState<'DASHBOARD' | 'MAP' | 'APPROVALS' | 'ADMIN' | 'DOCS'>('DASHBOARD');
   const [trips, setTrips] = useState<Trip[]>(store.getAllTrips());
   const [expenses, setExpenses] = useState<Expense[]>(store.getPendingExpenses());
   
@@ -127,8 +128,8 @@ const ManagerApp: React.FC = () => {
             <button onClick={() => setActiveTab('MAP')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${activeTab === 'MAP' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800'}`}>
                 <Map size={20} /> Operational Map
             </button>
-            <button onClick={() => setActiveTab('APPROVALS')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${activeTab === 'APPROVALS' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800'}`}>
-                <CheckCircle size={20} /> Audit & Approvals
+            <button onClick={() => setActiveTab('ADMIN')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl transition-all ${activeTab === 'ADMIN' ? 'bg-blue-600 text-white shadow-lg' : 'hover:bg-slate-800'}`}>
+                <Settings size={20} /> Admin Panel
             </button>
         </nav>
       </div>
@@ -137,7 +138,7 @@ const ManagerApp: React.FC = () => {
         <main className="flex-1 overflow-hidden">
             {activeTab === 'DASHBOARD' && renderDashboard()}
             {activeTab === 'MAP' && <SimulatedMap trips={trips} />}
-            {activeTab === 'APPROVALS' && <div className="p-10">Approvals logic stays as previously defined.</div>}
+            {activeTab === 'ADMIN' && <AdminPanel />}
         </main>
       </div>
     </div>
